@@ -18,5 +18,8 @@
     <ClCompile Include="callme.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClInclude Include="colordefs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

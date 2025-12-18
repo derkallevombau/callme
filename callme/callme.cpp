@@ -5,8 +5,6 @@
 #include <windows.h>
 
 // Added by Copilot to enable processing of ANSI escape sequences.
-// The reason why it didn't work first was that I used "\e" which
-// according to CP is understood by GCC, but not MSVC.
 // dwMode is 7 when starting in WT (thus VT is already enabled),
 // but it cannot hurt to keep this.
 // N.B.: A static *function* can only be called from within the same
