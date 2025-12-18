@@ -125,6 +125,10 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(OutDir)$(TargetName)$(TargetExt)" "$(USERPROFILE)\bin" &amp; copy "$(OutDir)$(TargetName).pdb" "$(USERPROFILE)\bin"</Command>
+      <Message>Copy executable to my bin dir</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="callme.cpp" />
