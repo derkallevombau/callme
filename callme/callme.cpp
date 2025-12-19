@@ -1,7 +1,6 @@
 #include <iostream>
 #include <format>
 #include <windows.h>
-#include <sal.h>
 #include <string>
 #include <cstdio>
 
@@ -25,18 +24,21 @@ static void enableVirtualTerminalProcessing()
 	SetConsoleMode(hOut, dwMode);
 }
 
-// Entry point when linking with /SUBSYSTEM:WINDOWS (Unicode version), as opposed to
-// `main` when linking with /SUBSYSTEM:CONSOLE.
-// See https://learn.microsoft.com/en-us/windows/win32/learnwin32/winmain--the-application-entry-point
-// and https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-winmain.
-// Annotations: See https://stackoverflow.com/questions/13078953/code-analysis-says-inconsistent-annotation-for-wwinmain-this-instance-has-no.
-int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
+// We link with /Subsystem:Windows to not get attached to parent process console
+// or a newly allocated one automatically. If we do that manually, we are able to
+// detect if we have been started from a non-console process and in that case, keep
+// our console window open until user dismisses it.
+// With /Subsystem:Console, we could only choose between prompting user even within
+// a terminal and our window being closed immediately when started from non-console
+// process.
+// Using main() as entry point in a "Windows" (not Console) app needs linking with
+// /Entry:mainCRTSetup. The benefit over (w)WinMain() is that we don't need to call
+// CommandLineToArgvW() and then narrow the wide strings (there is no "CommandLineToArgvA()").
+// Furthermore, that function is inconsistent: No args => argv[0] == module path,
+// else => argv[0] == first arg. main()'s argv: [0] == module path (always).
+int main(int argc, char* argv[])
 {
-	// See https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-commandlinetoargvw.
-	int argc;
-	LPWSTR* argv = CommandLineToArgvW(pCmdLine, &argc);
-
-	// Try to attach to parent process console first (if started from terminal) 
+	// Try to attach to parent process console first (if started from terminal).
 	// See https://learn.microsoft.com/en-us/windows/console/attachconsole
 	bool attachedToParent = AttachConsole(ATTACH_PARENT_PROCESS);
 
@@ -44,17 +46,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	if (!attachedToParent)
 	{
 		// See https://learn.microsoft.com/en-us/windows/console/allocconsole.
-		if (!AllocConsole())
-		{
-			LocalFree(argv);
-			return -1;
-		}
+		if (!AllocConsole()) return -1;
 	}
 
 	// Redirect standard streams to the console (whether attached or allocated).
-	// This is necessary because this is not a console application, which in turn
-	// is necessary to be able to detect if we have been started from within a console
-	// or not.
+	// In a console app, this is done automatically.
 	// freopen_s closes the file associated with the file stream pointed to by the
 	// fourth argument (FILE*), then opens the file specified by the second arg and
 	// associates that file with the file stream pointed to by the fourth arg.
@@ -70,7 +66,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	freopen_s(&pFileOut, "CONOUT$", "w", stdout);
 	freopen_s(&pFileErr, "CONOUT$", "w", stderr);
 
-	// Synchronize C++ streams with C streams
+	// Synchronize C++ streams with C streams.
 	std::cin.clear();
 	std::cout.clear();
 	std::cerr.clear();
@@ -79,16 +75,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 	for (int i = 0; i < argc; i++)
 	{
-		// Convert wide string to narrow string for std::format
-		std::wstring warg(argv[i]);
-		std::string arg(warg.begin(), warg.end());
-
 		// N.B.: Using "\n" instead of std::endl saves unnecessary flushes.
-		// N.B. 2: It's "\n" also on Windows; the runtime choses the correct
-		// line break for the platform.
+		// N.B. 2: It's "\n" also on Windows; the runtime choses the correct line break
+		// for the platform.
 		// N.B. 3: std::format is a C++20 feature.
 		std::cout << std::format("{}{}{}: >{}{}{}<\n", ansiLightGreen, i, ansiReset,
-			i % 2 ? ansiLightCyan : ansiLightMagenta, arg, ansiReset);
+			i % 2 ? ansiLightCyan : ansiLightMagenta, argv[i], ansiReset);
 	}
 
 	if (!attachedToParent)
@@ -104,10 +96,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 		// Free allocated console (but not an existing one to which we attached).
 		FreeConsole();
 	}
-
-	// Free memory allocated by CommandLineToArgvW.
-	// See https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-commandlinetoargvw
-	LocalFree(argv);
 
 	return 0;
 }
