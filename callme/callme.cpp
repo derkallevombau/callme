@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 	auto argsToPrint = vector<string>();
 	bool forceSeparateWin = false;
 
-	for (int i = 0; i < argc; i++)
+	for (int i = 1; i < argc; i++) // Skip module name (argv[0]).
 	{
 		// Caution when comparing two char*!
 		// There are overloads of operator== that do string comparison if at least
@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
 		// N.B. 2: It's "\n" also on Windows; the runtime choses the correct line break
 		// for the platform.
 		// N.B. 3: std::format is a C++20 feature.
-		cout << format("{}{}{}: >{}{}{}<\n", ansiLightGreen, i, ansiReset,
+		cout << format("{}{}{}: >{}{}{}<\n", ansiLightGreen, i + 1, ansiReset,
 			i % 2 ? ansiLightCyan : ansiLightMagenta, argsToPrint[i], ansiReset);
 	}
 
