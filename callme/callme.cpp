@@ -89,9 +89,8 @@ int main(int argc, char* argv[])
 		// console window which is closed immediately on exit.
 		std::cout << "\nPress Enter to exit.";
 
-		char* pInput = new char[1];
-		std::cin.read(pInput, 1);
-		delete[] pInput;
+		// Reads one character, but only after Enter.
+		std::cin.get();
 
 		// Free allocated console (but not an existing one to which we attached).
 		FreeConsole();
