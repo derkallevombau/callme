@@ -3,6 +3,8 @@
 #include <windows.h>
 #include <string>
 #include <cstdio>
+#include <vector>
+#include <cstring>
 
 #include "colordefs.h"
 
@@ -38,11 +40,36 @@ static void enableVirtualTerminalProcessing()
 // else => argv[0] == first arg. main()'s argv: [0] == module path (always).
 int main(int argc, char* argv[])
 {
-	// Try to attach to parent process console first (if started from terminal).
-	// See https://learn.microsoft.com/en-us/windows/console/attachconsole
-	bool attachedToParent = AttachConsole(ATTACH_PARENT_PROCESS);
+	using namespace std;
 
-	// If not started from console, allocate a new one
+	auto argsToPrint = vector<string>();
+	bool forceSeparateWin = false;
+
+	for (int i = 0; i < argc; i++)
+	{
+		// Caution when comparing two char*!
+		// There are overloads of operator== that do string comparison if at least
+		// one operand is a std::string, but a string literal is merely a const char[<length>].
+		if (strcmp(argv[i], "-s") == 0)
+		{
+			forceSeparateWin = true;
+			continue;
+		}
+
+		argsToPrint.push_back(argv[i]);
+	}
+
+	bool attachedToParent = false;
+
+	if (!forceSeparateWin)
+	{
+		// Try to attach to parent process console first.
+		// If we have been started from a console, this should work.
+		// See https://learn.microsoft.com/en-us/windows/console/attachconsole.
+		attachedToParent = AttachConsole(ATTACH_PARENT_PROCESS);
+	}
+
+	// If not started from console or started with "-s", allocate a new one.
 	if (!attachedToParent)
 	{
 		// See https://learn.microsoft.com/en-us/windows/console/allocconsole.
@@ -67,30 +94,30 @@ int main(int argc, char* argv[])
 	freopen_s(&pFileErr, "CONOUT$", "w", stderr);
 
 	// Synchronize C++ streams with C streams.
-	std::cin.clear();
-	std::cout.clear();
-	std::cerr.clear();
+	cin.clear();
+	cout.clear();
+	cerr.clear();
 
 	enableVirtualTerminalProcessing();
 
-	for (int i = 0; i < argc; i++)
+	for (int i = 0; i < argsToPrint.size(); i++)
 	{
 		// N.B.: Using "\n" instead of std::endl saves unnecessary flushes.
 		// N.B. 2: It's "\n" also on Windows; the runtime choses the correct line break
 		// for the platform.
 		// N.B. 3: std::format is a C++20 feature.
-		std::cout << std::format("{}{}{}: >{}{}{}<\n", ansiLightGreen, i, ansiReset,
-			i % 2 ? ansiLightCyan : ansiLightMagenta, argv[i], ansiReset);
+		cout << format("{}{}{}: >{}{}{}<\n", ansiLightGreen, i, ansiReset,
+			i % 2 ? ansiLightCyan : ansiLightMagenta, argsToPrint[i], ansiReset);
 	}
 
 	if (!attachedToParent)
 	{
 		// Wait for user input before exiting since we are running in our own
 		// console window which is closed immediately on exit.
-		std::cout << "\nPress Enter to exit.";
+		cout << "\nPress Enter to exit.";
 
 		// Reads one character, but only after Enter.
-		std::cin.get();
+		cin.get();
 
 		// Free allocated console (but not an existing one to which we attached).
 		FreeConsole();
