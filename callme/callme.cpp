@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
 	{
 		// Wait for user input before exiting since we are running in our own
 		// console window which is closed immediately on exit.
-		std::cout << "\nPress any key to exit.";
+		std::cout << "\nPress Enter to exit.";
 
 		char* pInput = new char[1];
 		std::cin.read(pInput, 1);
