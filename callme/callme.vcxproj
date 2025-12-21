@@ -74,6 +74,7 @@
   <ItemGroup>
     <ClCompile Include="callme.cpp" />
     <ClInclude Include="colordefs.h" />
+    <ClInclude Include="SubsysWinConsole.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
