@@ -25,19 +25,39 @@ int main(int argc, char* argv[])
 
 	auto argsToPrint = vector<string>();
 	bool forceSeparateWin = false;
+	bool separatorFound = false;
 
 	for (int i = 1; i < argc; i++) // Skip module name (argv[0]).
 	{
-		// Caution when comparing two char*!
+		// When "--" is encountered for the first time, argv[j] for j=1..i-1
+		// are options to this program and not to be printed.
+		// N.B.: We need to use strcmp() to compare two char*.
 		// There are overloads of operator== that do string comparison if at least
 		// one operand is a std::string, but a string literal is merely a const char[<length>].
-		if (strcmp(argv[i], "-s") == 0)
+		if (!separatorFound && i != 1 && strcmp(argv[i], "--") == 0)
 		{
-			forceSeparateWin = true;
-			continue;
-		}
+			separatorFound = true;
+			
+			argsToPrint.clear();
 
-		argsToPrint.push_back(argv[i]);
+			for (int j = 1; j < i; j++)
+			{
+				if (strcmp(argv[j], "-s") == 0)
+				{
+					forceSeparateWin = true;
+				}
+				else
+				{
+					if (!SubsysWinConsole::Initialise()) return -1;
+
+					cerr << format("Error: Unknown command line option: '{}'\n", argv[j]);
+				}
+			}
+		}
+		else
+		{
+			argsToPrint.push_back(argv[i]);
+		}
 	}
 
 	if (!SubsysWinConsole::Initialise(forceSeparateWin)) return -1;

@@ -10,5 +10,5 @@ I wouldn't publish it if it did not have a special feature:
 So you can check what arguments you pass e. g. from a scheduled task and yet get
 non-blocking behavior in terminals.
 
-Options:
+Options (must be listed first and followed by "--" to be interpreted):
 - `-s`: Force separate window (e. g. to not clutter terminal output)
