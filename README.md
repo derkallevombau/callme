@@ -2,7 +2,7 @@ A tiny C++ program for Windows that does nothing but list its command line argum
 Very simple, but an indispensable helper to spot quoting problems when doing shell
 programming.
 
-I wouldn't publish it if it did not have a special feature:
+Actually not worth sharing, but I added a special feature:
 - If started from within a console, it will print to that console and exit.
 - If started from a non-console process, it will open an own console window that will stay
   open until you dismiss it.
